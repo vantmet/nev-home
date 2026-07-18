@@ -66,3 +66,7 @@ import {
   to = module.mikrotik.routeros_system_certificate.local-root-ca-cert
   id = "*2"
 }
+import {
+  to = module.mikrotik.routeros_snmp_community.public
+  id = "*0"
+}

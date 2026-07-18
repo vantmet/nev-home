@@ -6,9 +6,42 @@ terraform {
   }
 }
 
+variable "ipv6_bridge_ip" {
+  type        = string
+  description = "IPv6 address for the bridge interface"
+}
+
+variable "ipv6_prefix" {
+  type        = string
+  description = "Prefix length for the IPv6 address"
+}
+
+variable "snmp_authentication_password" {
+  description = "SNMP authentication password"
+  type        = string
+  sensitive   = true
+}
+variable "snmp_encryption_password" {
+  description = "SNMP encryption password"
+  type        = string
+  sensitive   = true
+}
+
+module "mikrotik" {
+  source         = "./modules/mikrotik"
+  ipv6_bridge_ip = var.ipv6_bridge_ip
+  ipv6_prefix    = var.ipv6_prefix
+  snmp_authentication_password = var.snmp_authentication_password
+  snmp_encryption_password      = var.snmp_encryption_password
+}
+
+module "graphana" {
+  source = "./modules/graphana"
+}
+
 variable "tfuserpass" {
   type        = string
-  description = "Password for the RDS database instance"
+  description = "Password for the device"
   sensitive   = true
 }
 
