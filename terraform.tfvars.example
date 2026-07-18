@@ -1,0 +1,14 @@
+# Example terraform variables for nev-home
+# Copy to terraform.tfvars and fill in real values. Do NOT commit real secrets.
+
+# Password for the RouterOS user (sensitive)
+# Example: a strong random password
+tfuserpass = "change-me-with-strong-password"
+
+# IPv6 ULA or global prefix used for the IPv6 pool (no /length here)
+# Example: fd00:dead:beef::
+ipv6_prefix = "fd00:dead:beef::"
+
+# IPv6 address (with prefix length) to assign to the bridge interface
+# Example: fd00:dead:beef::1/64
+ipv6_bridge_ip = "fd00:dead:beef::1/64"
