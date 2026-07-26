@@ -13,7 +13,7 @@ resource "docker_volume" "influxdb_config" {
 
 # container
 resource "docker_container" "influxdb" {
-  name  = "influxdb"
+  name = "influxdb"
   networks_advanced {
     name = docker_network.tig.name
   }

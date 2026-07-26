@@ -7,20 +7,20 @@ resource "docker_volume" "telegraf_config" {
 }
 
 resource "docker_container" "telegraf" {
-  name  = "telegraf"
+  name = "telegraf"
   networks_advanced {
     name = "tig"
   }
-  image = docker_image.telegraf.image_id
+  image   = docker_image.telegraf.image_id
   restart = "always"
 
   volumes {
-    volume_name      = "${path.cwd}/telegraf"
+    volume_name    = "${path.cwd}/telegraf"
     container_path = "/etc/telegraf/"
     read_only      = true
   }
   capabilities {
-    add  = ["NET_RAW"]
+    add = ["NET_RAW"]
   }
   ports {
     internal = 8125

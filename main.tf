@@ -28,11 +28,11 @@ variable "snmp_encryption_password" {
 }
 
 module "mikrotik" {
-  source         = "./modules/mikrotik"
-  ipv6_bridge_ip = var.ipv6_bridge_ip
-  ipv6_prefix    = var.ipv6_prefix
+  source                       = "./modules/mikrotik"
+  ipv6_bridge_ip               = var.ipv6_bridge_ip
+  ipv6_prefix                  = var.ipv6_prefix
   snmp_authentication_password = var.snmp_authentication_password
-  snmp_encryption_password      = var.snmp_encryption_password
+  snmp_encryption_password     = var.snmp_encryption_password
 }
 
 module "graphana" {

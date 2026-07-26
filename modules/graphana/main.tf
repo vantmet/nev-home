@@ -12,8 +12,8 @@ provider "docker" {
 }
 
 resource "docker_network" "tig" {
-  name = "tig"
-  ipv6 = true
+  name   = "tig"
+  ipv6   = true
   driver = "bridge"
   ipam_options = {
     driver = "host-local"
