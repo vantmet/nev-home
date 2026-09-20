@@ -31,6 +31,7 @@ resource "routeros_ip_dhcp_server_lease" "static" {
     "MMESH"   = { mac = "D4:92:5E:70:AF:91", addr = "192.168.1.251", cid = null }
     "OMESH"   = { mac = "08:C7:F5:89:B1:4D", addr = "192.168.1.252", cid = null }
     "JMESH"   = { mac = "08:C7:F5:89:C3:D1", addr = "192.168.1.253", cid = null }
+    "SigenInv"   = { mac = "0C:47:A9:92:BB:65", addr = "192.168.1.24", cid = null }
   }
 
   mac_address      = each.value.mac
