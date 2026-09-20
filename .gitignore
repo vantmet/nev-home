@@ -1,3 +1,41 @@
+# .gitignore for OpenTofu projects
+
+# Local .terraform directories
+
+**/.terraform/
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files (contain real secrets)
 *.tfvars
-*tfstate*
+*.tfvars.json
+
+# But include the example template
+!example.tfvars
+!example.tfvars.json
+
+# Override files (local-only changes)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include lock file - important for reproducibility
+!.terraform.lock.hcl
+
+# Binary plan files
+*.tfplan
+
+# Ignore Grafana stack files
+telegraf/*
+prometheus/*Bearer*
+prometheus/*secret*
+alloy/*Bearer*
+alloy/*secret*
 HA_Bearer.txt

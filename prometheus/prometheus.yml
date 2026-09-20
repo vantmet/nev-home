@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 1m
+  scrape_timeout: 10s
+  evaluation_interval: 1m
+  metric_name_validation_scheme: utf8
+  metric_name_escaping_scheme: allow-utf-8
+  scrape_native_histograms: false
+  extra_scrape_metrics: false
+runtime:
+  gogc: 75
+storage:
+  tsdb:
+    outofordertimewindow: 0
+    retention:
+      time: 15d
+otlp:
+  translation_strategy: UnderscoreEscapingWithSuffixes
+  label_name_underscore_sanitization: true
+  label_name_preserve_multiple_underscores: true
+
+scrape_configs:
+  - job_name: 'loki'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['loki:3100'] # Replace with your Loki host/port
+
+# Example Prometheus scrape_configs entry (For version 2.26+)
+  - job_name: "hass"
+    scrape_interval: 10s
+    metrics_path: /api/prometheus
+
+    # Long-Lived Access Token
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/HA_Bearer.txt
+    scheme: http
+    static_configs:
+      - targets: ['192.168.1.21:8123']

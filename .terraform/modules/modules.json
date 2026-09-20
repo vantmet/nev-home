@@ -1,1 +1,1 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"mikrotik","Source":"./modules/mikrotik","Dir":"modules/mikrotik"}]}
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"graphana","Source":"./modules/graphana","Dir":"modules/graphana"},{"Key":"mikrotik","Source":"./modules/mikrotik","Dir":"modules/mikrotik"}]}
