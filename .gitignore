@@ -38,3 +38,4 @@ prometheus/*Bearer*
 prometheus/*secret*
 alloy/*Bearer*
 alloy/*secret*
+HA_Bearer.txt
