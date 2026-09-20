@@ -36,3 +36,4 @@ override.tf.json
 telegraf/*
 prometheus/*Bearer*
 prometheus/*secret*
+HA_Bearer.txt
