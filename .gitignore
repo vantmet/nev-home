@@ -36,3 +36,5 @@ override.tf.json
 telegraf/*
 prometheus/*Bearer*
 prometheus/*secret*
+alloy/*Bearer*
+alloy/*secret*

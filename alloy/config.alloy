@@ -84,7 +84,7 @@ prometheus.scrape "metrics_integrations_integrations_hass" {
 
 	authorization {
 		type        = "Bearer"
-		credentials = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5MzA3OTIzOTY3YjQ0OWY1OGYyNDRhNjYyYzE4OGRiYiIsImlhdCI6MTc4NTA4MTYyNywiZXhwIjoyMTAwNDQxNjI3fQ.Ud5xbapTnuhMn_t3_78hMbx9L0sJlz0TndMLqTYncco"
+		credentials_file = "/etc/alloy/HA_Bearer.txt"
 	}
 }
 
