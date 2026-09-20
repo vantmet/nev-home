@@ -1,6 +1,4 @@
-livedebugging {
-  enabled = true
-}
+prometheus.exporter.unix "local_system" { }
 
 // This component is responsible for disovering new containers within the docker environment
 discovery.docker "graph_stack" {
@@ -10,7 +8,7 @@ discovery.docker "graph_stack" {
 
 // This component is responsible for relabeling the discovered containers
 discovery.relabel "graph_stack" {
-	targets = []
+	targets = discovery.docker.graph_stack.targets
 
 	rule {
 		source_labels = ["__meta_docker_container_name"]
@@ -23,13 +21,19 @@ discovery.relabel "graph_stack" {
 loki.source.docker "graph_stack" {
 	host             = "unix:///run/user/1000/podman/podman.sock"
 	targets          = discovery.docker.graph_stack.targets
-	forward_to       = [loki.write.local.receiver]
+	forward_to       = [loki.process.graph_stack.receiver]
 	relabel_rules    = discovery.relabel.graph_stack.rules
 	refresh_interval = "5s"
 }
 
 // This component is responsible for processing the logs (In this case adding static labels)
 loki.process "graph_stack" {
+// Drop logs older than 7 days
+    stage.timestamp {
+        source = "timestamp"
+        format = "RFC3339Nano"
+        // Loki will handle old entries, but you can add custom logic here
+    }
     stage.static_labels {
     values = {
       env = "production",
@@ -40,12 +44,13 @@ loki.process "graph_stack" {
 
 loki.source.syslog "local" {
   listener {
-    address  = "0.0.0.0:12345"
+    address  = "0.0.0.0:12347"
+		protocol = "tcp"
     labels   = { component = "loki.source.syslog", protocol = "tcp" }
   }
 
   listener {
-    address  = "0.0.0.0:12345"
+    address  = "0.0.0.0:12346"
     protocol = "udp"
     labels   = { component = "loki.source.syslog", protocol = "udp"}
   }
@@ -53,8 +58,59 @@ loki.source.syslog "local" {
   forward_to = [loki.write.local.receiver]
 }
 
+discovery.relabel "metrics_integrations_integrations_hass" {
+	targets = [{
+		__address__ = "192.168.1.21:8123",
+	}]
+
+	rule {
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
+}
+
+prometheus.scrape "scrape_metrics" {
+  targets         = prometheus.exporter.unix.local_system.targets
+  forward_to      = [prometheus.relabel.filter_metrics.receiver]
+  scrape_interval = "10s"
+}
+
+prometheus.scrape "metrics_integrations_integrations_hass" {
+	targets      = discovery.relabel.metrics_integrations_integrations_hass.output
+	forward_to   = [prometheus.remote_write.metrics_service.receiver]
+	job_name     = "integrations/hass"
+	metrics_path = "/api/prometheus"
+	scheme       = "https"
+
+	authorization {
+		type        = "Bearer"
+		credentials = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5MzA3OTIzOTY3YjQ0OWY1OGYyNDRhNjYyYzE4OGRiYiIsImlhdCI6MTc4NTA4MTYyNywiZXhwIjoyMTAwNDQxNjI3fQ.Ud5xbapTnuhMn_t3_78hMbx9L0sJlz0TndMLqTYncco"
+	}
+}
+
+prometheus.relabel "filter_metrics" {
+  rule {
+    action        = "drop"
+    source_labels = ["env"]
+    regex         = "dev"
+  }
+
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+}
+
 loki.write "local" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
+}
+
+prometheus.remote_write "metrics_service" {
+    endpoint {
+        url = "http://prometheus:9090/api/v1/write"
+
+        // basic_auth {
+        //   username = "admin"
+        //   password = "admin"
+        // }
+    }
 }

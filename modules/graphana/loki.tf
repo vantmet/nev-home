@@ -39,13 +39,13 @@ resource "docker_container" "alloy" {
   ]
   image = docker_image.alloy.image_id
   ports {
-    internal = 12345
-    external = 12345
+    internal = 12347
+    external = 12347
     protocol = "tcp"
   }
   ports {
-    internal = 12345
-    external = 12345
+    internal = 12346
+    external = 12346
     protocol = "udp"
   }
   volumes {
@@ -68,8 +68,12 @@ resource "docker_container" "rsyslog" {
   ports {
     internal = 10514
     external = 10514
+    protocol = "tcp"
+  }
+  ports {
+    internal = 10514
+    external = 10514
     protocol = "udp"
-
   }
   volumes {
     volume_name    = "${path.cwd}/rsyslog/rsyslog.conf"
