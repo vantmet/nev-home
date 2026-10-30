@@ -1,0 +1,19 @@
+service: nev-home
+tofu_binary: tofu
+
+templates:
+  - source: terraform.tfvars.tmpl
+    dest: terraform.tfvars
+    ephemeral: true
+
+  - source: telegraf/telegraf.conf.tmpl
+    dest: telegraf/telegraf.conf
+    ephemeral: false
+
+  - source: alloy/HA_Bearer.txt.tmpl
+    dest: alloy/HA_Bearer.txt
+    ephemeral: false
+
+  - source: prometheus/HA_Bearer.txt.tmpl
+    dest: prometheus/HA_Bearer.txt
+    ephemeral: false

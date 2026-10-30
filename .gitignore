@@ -1,7 +1,6 @@
 # .gitignore for OpenTofu projects
 
 # Local .terraform directories
-
 **/.terraform/
 
 # .tfstate files
@@ -19,6 +18,7 @@ crash.*.log
 # But include the example template
 !example.tfvars
 !example.tfvars.json
+!*.tmpl
 
 # Override files (local-only changes)
 override.tf
@@ -34,8 +34,18 @@ override.tf.json
 
 # Ignore Grafana stack files
 telegraf/*
+!telegraf/*.tmpl
 prometheus/*Bearer*
 prometheus/*secret*
+!prometheus/*.tmpl
 alloy/*Bearer*
 alloy/*secret*
+!alloy/*.tmpl
 HA_Bearer.txt
+
+# nevctl compiled binary in root
+/nevctl
+
+# Agent files
+.agents/
+skills-lock.json
