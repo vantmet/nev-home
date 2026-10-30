@@ -1,0 +1,6 @@
+tfuserpass                   = {{ secret "tfuserpass" | quote }}
+ipv6_prefix                  = "2a10:d582:c56d::/48"
+ipv6_bridge_ip               = "2a10:d582:c56d::1/64"
+graf_admin                   = {{ secret "graf_admin" | quote }}
+snmp_authentication_password = {{ secret "snmp_authentication_password" | quote }}
+snmp_encryption_password     = {{ secret "snmp_encryption_password" | quote }}
