@@ -98,13 +98,13 @@ env_val = {{ env "TEST_ENV" }}
 		t.Fatalf("expected:\n%s\ngot:\n%s", expected, string(out))
 	}
 
-	// Verify permissions
+	// Verify permissions (default 0644 gives read access to group and other)
 	info, err := os.Stat(destFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0600 {
-		t.Fatalf("expected 0600 permissions, got %o", info.Mode().Perm())
+	if info.Mode().Perm() != 0644 {
+		t.Fatalf("expected 0644 permissions, got %o", info.Mode().Perm())
 	}
 
 	// Test Clean ephemeral

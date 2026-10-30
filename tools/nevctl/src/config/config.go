@@ -19,6 +19,7 @@ type TemplateMapping struct {
 	Source    string `yaml:"source"`
 	Dest      string `yaml:"dest"`
 	Ephemeral bool   `yaml:"ephemeral"`
+	Mode      string `yaml:"mode"`
 }
 
 // Config represents the nevctl configuration.

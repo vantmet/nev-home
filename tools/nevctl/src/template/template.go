@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -116,13 +117,24 @@ func (e *Engine) RenderAll() error {
 		}
 	}
 
-	// Write all files securely with 0600 permissions
-	for dest, data := range renderedFiles {
-		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return fmt.Errorf("creating directory for %s: %w", dest, err)
+	// Write all files with 0644 permissions (user rw, group r, other r) by default, or custom mode
+	for _, tmpl := range e.cfg.Templates {
+		data := renderedFiles[tmpl.Dest]
+		mode := os.FileMode(0644)
+		if tmpl.Mode != "" {
+			if parsed, err := strconv.ParseUint(tmpl.Mode, 8, 32); err == nil {
+				mode = os.FileMode(parsed)
+			}
 		}
-		if err := os.WriteFile(dest, data, 0600); err != nil {
-			return fmt.Errorf("writing rendered file %s: %w", dest, err)
+
+		if err := os.MkdirAll(filepath.Dir(tmpl.Dest), 0755); err != nil {
+			return fmt.Errorf("creating directory for %s: %w", tmpl.Dest, err)
+		}
+		if err := os.WriteFile(tmpl.Dest, data, mode); err != nil {
+			return fmt.Errorf("writing rendered file %s: %w", tmpl.Dest, err)
+		}
+		if err := os.Chmod(tmpl.Dest, mode); err != nil {
+			return fmt.Errorf("setting permissions on %s: %w", tmpl.Dest, err)
 		}
 	}
 
