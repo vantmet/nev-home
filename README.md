@@ -1,66 +1,180 @@
-# nev-home Terraform
+# nev-home
 
-This repository contains Terraform configuration to manage a local RouterOS (MikroTik) router for a home setup.
+Infrastructure as Code for managing a local MikroTik RouterOS router and observability stack (Grafana, Prometheus, InfluxDB, Telegraf, Loki, Alloy).
+
+Instead of running raw OpenTofu or Terraform directly, this repository uses **`nevctl`** — a dedicated Go command-and-control CLI that integrates with the Linux system keyring to dynamically hydrate configuration templates before invoking OpenTofu. Sensitive credentials are kept in the OS keyring and never committed to git.
+
+---
 
 ## Prerequisites
 
-- Terraform (recommended >= 1.0). Verify with `terraform version`.
-- Network access to the RouterOS device (the configuration uses `https://nev-core-01.local` by default). Ensure DNS or /etc/hosts resolves the name, or update the provider `hosturl` in `main.tf` to the correct address.
-- RouterOS credentials: a user with sufficient privileges to manage interfaces, IP addresses, DHCP and certificates. The configuration defaults to username `tfuser` in `main.tf` and reads the password from a Terraform variable.
+- **OpenTofu** (recommended `>= 1.6`, verify with `tofu version`) or Terraform.
+- **Go** (`>= 1.22`, verify with `go version`) to build the `nevctl` CLI.
+- **Linux Keyring / Secret Service** (`gnome-keyring`, `libsecret`, or any DBus Secret Service provider) for secure credential storage.
+- **Docker** or **Podman** for running the observability stack containers.
+- **Network connectivity** to the RouterOS device (defaults to `https://nev-core-01.local`). Ensure DNS or `/etc/hosts` resolves the hostname.
+- **RouterOS user**: A user (default `tfuser`) with sufficient privileges to manage interfaces, IP addresses, DHCP, certificates, and SNMP.
 
-## First-run secret setup
+---
 
-Before the first `terraform init` or `terraform apply`, create a local secrets file from the example:
+## Building `nevctl`
 
-1. Copy the example file:
+The `nevctl` source code lives in [`tools/nevctl`](tools/nevctl).
 
-   cp terraform.tfvars.example terraform.tfvars
+To compile the binary in the repository root:
 
-2. Edit `terraform.tfvars` and set the real values, especially `tfuserpass`.
+```bash
+cd tools/nevctl
+go build -o ../../nevctl ./cmd/nevctl
+cd ../..
+```
 
-This file is intentionally local-only and should not be committed. The repository `.gitignore` already ignores `*.tfvars` files, including `terraform.tfvars`.
+*(Optional)* You can also install `nevctl` into your `$GOPATH/bin` or user PATH:
 
-If you prefer not to keep a local tfvars file, you can also supply the same values through environment variables such as `TF_VAR_tfuserpass`, `ROS_PASSWORD`, or the equivalent Terraform variables used in `main.tf`.
+```bash
+cd tools/nevctl
+go install ./cmd/nevctl
+```
 
-## terraform.tfvars file
+---
 
-An example file is included at `terraform.tfvars.example`. Copy it to `terraform.tfvars` and update the values before running Terraform:
+## Initial Secret Setup
 
-1. Copy the example:
+Rather than writing plaintext passwords into a `.tfvars` file, credentials are saved securely in the Linux system keyring under the service namespace `nev-home`.
 
-   cp terraform.tfvars.example terraform.tfvars
+Run `nevctl secret set` for each required secret. If you omit the value argument, you will be prompted securely for masked input:
 
-2. Edit `terraform.tfvars` and set:
-   - `tfuserpass` — password for the RouterOS account (sensitive). Do NOT commit this file if it contains real secrets.
-   - `ipv6_prefix` — the IPv6 prefix to use for the RouterOS IPv6 pool (example: `fd00:dead:beef::` or `fd00:dead:beef::/48` depending on your addressing plan).
-   - `ipv6_bridge_ip` — the IPv6 address (with prefix length) to assign to the bridge interface (example: `fd00:dead:beef::1/64`).
+```bash
+# RouterOS credentials
+./nevctl secret set tfuserpass
 
-You can also supply the password and variables via environment variables instead of a tfvars file. Terraform supports `TF_VAR_<name>` for variables (e.g., `TF_VAR_tfuserpass`). The provider block in `main.tf` also lists `ROS_*` environment variable names that can be used for host/username/password settings.
+# SNMP credentials
+./nevctl secret set snmp_authentication_password
+./nevctl secret set snmp_encryption_password
 
-## Running Terraform
+# Grafana & Monitoring
+./nevctl secret set graf_admin
+./nevctl secret set influxdb_token
 
-From the repository root:
+# Home Assistant bearer tokens (for Alloy and Prometheus)
+./nevctl secret set alloy_ha_bearer
+./nevctl secret set prometheus_ha_bearer
+```
 
-1. Initialize the working directory and providers:
+To view all configured secrets in the keyring for this service:
 
-   terraform init
+```bash
+./nevctl secret list
+```
 
-2. Review the planned changes:
+To retrieve or delete a secret:
 
-   terraform plan -out=tfplan
+```bash
+./nevctl secret get tfuserpass
+./nevctl secret delete old_key
+```
 
-3. Apply the changes:
+---
 
-   terraform apply tfplan
+## Running OpenTofu via `nevctl`
 
-Or run `terraform apply` and confirm when prompted.
+`nevctl` wraps common OpenTofu commands with automated secret hydration and cleanup:
 
-## Security notes
+### 1. Initialize
+```bash
+./nevctl init
+```
 
-- Do NOT commit real credentials. Keep `terraform.tfvars` out of version control (it is common to add it to `.gitignore`).
-- The provider is configured with `insecure = true` in `main.tf` to skip TLS verification — this is convenient for local self-signed certs but is insecure for production. If you have proper certs, consider removing or tightening this setting.
+### 2. Review Planned Changes
+```bash
+./nevctl plan
+```
+You can pass standard OpenTofu flags:
+```bash
+./nevctl plan -out=tfplan
+```
 
-## Contact / Troubleshooting
+### 3. Apply Changes
+```bash
+./nevctl apply
+```
 
-- If Terraform cannot reach the device, check network connectivity and DNS. Try `curl -vk https://nev-core-01.local` from the machine running Terraform to verify TLS/connectivity.
-- If authentication fails, verify username and password and that the `tfuser` account has the required privileges.
+### 4. Destroy Resources
+```bash
+./nevctl destroy
+```
+
+### 5. Arbitrary Pass-Through Commands
+To execute any other OpenTofu command with hydrated secrets:
+```bash
+./nevctl tofu state list
+./nevctl tofu show
+```
+
+---
+
+## How It Works: Templating & Lifecycle
+
+Template mappings and behavior are configured in [`nevctl.yaml`](nevctl.yaml):
+
+```yaml
+service: nev-home
+tofu_binary: tofu
+
+templates:
+  - source: terraform.tfvars.tmpl
+    dest: terraform.tfvars
+    ephemeral: true
+
+  - source: telegraf/telegraf.conf.tmpl
+    dest: telegraf/telegraf.conf
+    ephemeral: false
+
+  - source: alloy/HA_Bearer.txt.tmpl
+    dest: alloy/HA_Bearer.txt
+    ephemeral: false
+
+  - source: prometheus/HA_Bearer.txt.tmpl
+    dest: prometheus/HA_Bearer.txt
+    ephemeral: false
+```
+
+### Execution Lifecycle:
+1. **Hydrate:** Prior to running OpenTofu, `nevctl` reads the committed `*.tmpl` files, looks up required credentials in the system keyring, and writes active files with `0644` permissions so local services and containers can read them.
+   * If any secret required by a template is missing from the keyring, `nevctl` fails fast and lists all missing keys.
+2. **Execute:** `nevctl` spawns OpenTofu and forwards OS signals (`SIGINT`/`SIGTERM`) cleanly, ensuring OpenTofu can finish writing state if interrupted.
+3. **Clean:** 
+   * **Ephemeral files** (like `terraform.tfvars`) are wiped immediately from disk upon exit in a deferred handler—even if OpenTofu fails or is interrupted.
+   * **Persistent files** (like `telegraf.conf` or bearer tokens mounted by Docker containers) remain on disk so running containers continue functioning across restarts.
+
+### Manual Render & Clean Commands
+
+You can manually manage rendered files at any time:
+
+```bash
+# Render all templates without executing OpenTofu
+./nevctl render
+
+# Remove only ephemeral files (e.g. terraform.tfvars)
+./nevctl clean --ephemeral-only
+
+# Remove all rendered configuration files from disk
+./nevctl clean
+```
+
+---
+
+## Troubleshooting
+
+- **Keyring unlocked/headless session:** If using `nevctl` in a headless SSH or pure TTY session, ensure your keyring daemon is running and unlocked:
+  ```bash
+  export $(echo -n "" | gnome-keyring-daemon --start --unlock --components=secrets)
+  ```
+- **RouterOS Connectivity:** If OpenTofu fails to connect to the router, verify DNS and TLS reachability:
+  ```bash
+  curl -vk https://nev-core-01.local
+  ```
+- **Custom OpenTofu Binary:** If OpenTofu is located at an alternative path, set `tofu_binary` in `nevctl.yaml` or export the `TOFU_BIN` environment variable:
+  ```bash
+  export TOFU_BIN="/usr/local/bin/tofu"
+  ```
