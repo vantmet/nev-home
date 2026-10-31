@@ -164,6 +164,53 @@ You can manually manage rendered files at any time:
 
 ---
 
+## Grafana Stack
+
+The Grafana-based observability stack deployed by the [`modules/graphana`](modules/graphana) Terraform module runs as Docker containers on the `tig` bridge network. The diagram below shows the deployed components and how they connect to each other:
+
+```mermaid
+flowchart LR
+    subgraph stack["Observability stack"]
+        grafana["Grafana<br/>graphana-main"]
+        prometheus["Prometheus<br/>prometheus"]
+        loki["Loki<br/>loki"]
+        alloy["Alloy<br/>alloy"]
+        telegraf["Telegraf<br/>telegraf"]
+        influxdb["InfluxDB<br/>influxdb"]
+        rsyslog["rsyslog<br/>rsyslog"]
+    end
+
+    router["MikroTik RouterOS<br/>nev-core-01"]
+    homeassistant["Home Assistant<br/>192.168.1.21:8123"]
+
+    grafana -->|"query datasource"| prometheus
+    grafana -->|"query datasource"| loki
+    grafana -->|"query datasource"| influxdb
+
+    rsyslog -->|"syslog TCP/UDP"| alloy
+    alloy -->|"log push"| loki
+    alloy -->|"metrics remote write"| prometheus
+    alloy -->|"scrape metrics"| prometheus
+    prometheus -->|"scrape"| loki
+    telegraf -->|"write to InfluxDB"| influxdb
+
+    router -->|"SNMPv3"| telegraf
+    router -->|"remote syslog"| rsyslog
+    homeassistant -->|"scrape metrics"| alloy
+```
+
+**Deployed components:**
+
+- **Grafana** (`graphana-main`, host port `3000`) — the UI layer; queries the Prometheus, Loki, and InfluxDB datasources.
+- **Prometheus** (`prometheus`, host port `9090`) — scrapes Loki and Home Assistant, and receives metrics from Alloy via remote write.
+- **Loki** (`loki`, host port `3100`) — receives log entries pushed by Alloy.
+- **Alloy** (`alloy`, ports `12345`/`12346`/`12347`) — discovers Docker containers, collects logs for Loki and scrapes metrics for Prometheus.
+- **Telegraf** (`telegraf`, host port `8125`) — SNMP collector that writes to InfluxDB.
+- **InfluxDB** (`influxdb`, host port `8086`) — time-series database receiving from Telegraf.
+- **rsyslog** (`rsyslog`, host port `10514`) — syslog receiver forwarding to Alloy.
+
+---
+
 ## Troubleshooting
 
 - **Keyring unlocked/headless session:** If using `nevctl` in a headless SSH or pure TTY session, ensure your keyring daemon is running and unlocked:
