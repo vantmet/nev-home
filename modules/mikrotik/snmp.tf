@@ -15,10 +15,12 @@ resource "routeros_snmp" "snmp" {
 
 resource "routeros_snmp_community" "public" {
   name      = "public"
-  disabled = true
+  addresses = ["::/0"]
+  disabled  = true
 }
 resource "routeros_snmp_community" "grafana" {
-  name = "Grafana"
+  name                    = "Grafana"
+  addresses               = ["::/0"]
   authentication_password = var.snmp_authentication_password
   authentication_protocol = "MD5"
   disabled                = false

@@ -9,12 +9,24 @@ import {
     "4-Desk"       = { id = "*2" }
     "5-Hive"       = { id = "*3" }
     "6-New RPi"    = { id = "*4" }
-    "7-E Room"     = { id = "*5" }
-    "8-OldRPi"     = { id = "*6" }
+    "7-P24"        = { id = "*5" }
+    "8-P23"        = { id = "*6" }
     "sfp-sfpplus1" = { id = "*7" }
   }
   to = module.mikrotik.routeros_interface_bridge_port.bridge_ports[each.key]
   id = each.value.id
+}
+import {
+  to = module.mikrotik.routeros_interface_bridge_vlan.vlan20
+  id = "*1"
+}
+import {
+  to = module.mikrotik.routeros_interface_vlan.vlan20
+  id = "*C"
+}
+import {
+  to = module.mikrotik.routeros_ip_address.vlan20
+  id = "*3"
 }
 import {
   to = module.mikrotik.routeros_ip_pool.dhcp
@@ -63,8 +75,20 @@ import {
   id = "*1"
 }
 import {
+  to = module.mikrotik.routeros_ipv6_dhcp_client.wan
+  id = "*1"
+}
+import {
+  to = module.mikrotik.routeros_ip_dhcp_server_network.vlan20
+  id = "*2"
+}
+import {
   to = module.mikrotik.routeros_system_certificate.local-root-ca-cert
   id = "*2"
+}
+import {
+  to = module.mikrotik.routeros_ipv6_dhcp_server.server1
+  id = "*1"
 }
 import {
   to = module.mikrotik.routeros_snmp_community.public

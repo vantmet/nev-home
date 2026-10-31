@@ -1,7 +1,9 @@
 resource "routeros_interface_bridge" "bridge" {
   comment        = "defconf"
   name           = "bridge"
-  vlan_filtering = false
+  admin_mac      = "F4:1E:57:5F:B0:27"
+  auto_mac       = false
+  vlan_filtering = true
 }
 
 resource "routeros_interface_bridge_port" "bridge_ports" {
@@ -11,8 +13,8 @@ resource "routeros_interface_bridge_port" "bridge_ports" {
     "4-Desk"       = { comment = "", pvid = "1" }
     "5-Hive"       = { comment = "", pvid = "1" }
     "6-New RPi"    = { comment = "", pvid = "1" }
-    "7-E Room"     = { comment = "", pvid = "1" }
-    "8-OldRPi"     = { comment = "", pvid = "1" }
+    "7-P24"        = { comment = "", pvid = "20" }
+    "8-P23"        = { comment = "", pvid = "20" }
     "sfp-sfpplus1" = { comment = "", pvid = "1" }
   }
   bridge    = routeros_interface_bridge.bridge.name

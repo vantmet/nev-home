@@ -23,9 +23,32 @@ resource "routeros_ip_address" "lan" {
   vrf       = routeros_ip_vrf.vrf_main.name
 }
 
+resource "routeros_ip_address" "vlan20" {
+  address   = "192.168.2.1/24"
+  interface = "VLAN20 - SigenStore"
+  network   = "192.168.2.0"
+}
+
 resource "routeros_ip_dhcp_client" "wan" {
   interface    = "1-ONT"
   use_peer_dns = false
-  use_peer_ntp = true
 
+}
+
+resource "routeros_ipv6_dhcp_client" "wan" {
+  interface          = "1-ONT"
+  add_default_route  = true
+  request            = ["prefix"]
+  pool_name          = routeros_ipv6_pool.BRSKPool.name
+  pool_prefix_length = 64
+  use_interface_duid = true
+  use_peer_dns       = false
+}
+
+resource "routeros_ipv6_dhcp_server" "server1" {
+  address_pool = "static-only"
+  name        = "server1"
+  interface   = routeros_interface_bridge.bridge.name
+  prefix_pool = routeros_ipv6_pool.BRSKPool.name
+  disabled    = true
 }

@@ -36,7 +36,7 @@ func (r *Runner) Execute(ctx context.Context, args []string) error {
 
 	engine := template.NewEngine(r.cfg, r.kr)
 
-	fmt.Println("==> Hydrating configuration templates...")
+	fmt.Fprintln(os.Stderr, "==> Hydrating configuration templates...")
 	if err := engine.RenderAll(); err != nil {
 		return err
 	}
