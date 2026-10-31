@@ -82,10 +82,7 @@ prometheus.scrape "metrics_integrations_integrations_hass" {
 	metrics_path = "/api/prometheus"
 	scheme       = "https"
 
-	authorization {
-		type        = "Bearer"
-		credentials_file = "/etc/alloy/HA_Bearer.txt"
-	}
+	bearer_token = {{ secret "alloy_ha_bearer" | quote }}
 }
 
 prometheus.relabel "filter_metrics" {

@@ -38,10 +38,8 @@ telegraf/*
 prometheus/*Bearer*
 prometheus/*secret*
 !prometheus/*.tmpl
-alloy/*Bearer*
-alloy/*secret*
+alloy/*
 !alloy/*.tmpl
-HA_Bearer.txt
 
 # nevctl compiled binary in root
 /nevctl

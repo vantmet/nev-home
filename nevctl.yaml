@@ -10,8 +10,8 @@ templates:
     dest: telegraf/telegraf.conf
     ephemeral: false
 
-  - source: alloy/HA_Bearer.txt.tmpl
-    dest: alloy/HA_Bearer.txt
+  - source: alloy/config.alloy.tmpl
+    dest: alloy/config.alloy
     ephemeral: false
 
   - source: prometheus/HA_Bearer.txt.tmpl

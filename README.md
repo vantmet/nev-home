@@ -130,8 +130,8 @@ templates:
     dest: telegraf/telegraf.conf
     ephemeral: false
 
-  - source: alloy/HA_Bearer.txt.tmpl
-    dest: alloy/HA_Bearer.txt
+  - source: alloy/config.alloy.tmpl
+    dest: alloy/config.alloy
     ephemeral: false
 
   - source: prometheus/HA_Bearer.txt.tmpl
@@ -146,6 +146,13 @@ templates:
 3. **Clean:** 
    * **Ephemeral files** (like `terraform.tfvars`) are wiped immediately from disk upon exit in a deferred handler—even if OpenTofu fails or is interrupted.
    * **Persistent files** (like `telegraf.conf` or bearer tokens mounted by Docker containers) remain on disk so running containers continue functioning across restarts.
+
+### Home Assistant Bearer Tokens
+
+The Home Assistant bearer tokens are injected via keyring-backed templates rather than mounted secret files:
+
+- **Alloy**: The committed template `alloy/config.alloy.tmpl` renders `alloy/config.alloy`, which sets `bearer_token` from the `alloy_ha_bearer` keyring secret.
+- **Prometheus**: Still renders the bearer token to `prometheus/HA_Bearer.txt` from the `prometheus_ha_bearer` keyring secret (pending migration to an environment variable).
 
 ### Manual Render & Clean Commands
 
